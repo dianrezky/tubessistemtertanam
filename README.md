@@ -1,7 +1,7 @@
 # TUGAS BESAR SISTEM TERTANAM S2
 
 
-Aplikasi yang dibuat : Water Monitoring and Quality System Using FreeRTOS ESP32
+Aplikasi yang dibuat : Water Monitoring and Quality System Using FreeRTOS ESP32 Based On Website
 
 Dibuat Oleh :
 1. Dian Rezky Wulandari (2101221026)
