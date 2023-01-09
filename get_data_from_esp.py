@@ -5,6 +5,7 @@ import os
 import datetime 
 
 
+
 ############# INPUT FILE #################
 filename = 'sensor_value_used.json'
 
@@ -14,84 +15,127 @@ file_model_predict_water.close()
 
 ######## INITIAL THE VARIABLE #########
  
-s = socket.socket()         
+# importing the libraries
+from bs4 import BeautifulSoup
+import requests
+
+url="http://192.168.50.192/"
+
+time = datetime.datetime.now()
+
+today = time.strftime("%d/%m/%Y")
+
+x=0
+while(1):
+
+    # Make a GET request to fetch the raw HTML content
+    html_content = requests.get(url).text
+    # Parse the html content
+    soup = BeautifulSoup(html_content, "lxml")
+    #print(soup.prettify()) # print the parsed data of html
+    
+    high_value_sensor=float(soup.h4.text)
+    ph_value_sensor=float(soup.h3.text)
+    tds_value_sensor=float(soup.h2.text)
+
+    result_predict=model_predict_water.predict([[tds_value_sensor, ph_value_sensor]])[0]
+
+    if result_predict ==1:
+        result_value="Drinkable"
+    elif result_predict == 0:
+        result_value="Not Drinkable"
+    
+
+    data_obj ={
+        "date" : today,
+        "solid": tds_value_sensor,
+        "ph": ph_value_sensor,
+        "high":high_value_sensor,
+        "predict": result_value
+    }
+
+    if os.path.isfile(filename) and os.access(filename, os.R_OK):
+        fp = json.load(open(filename))
+        if type(fp) is dict:
+            fp = [fp]
+        fp.append(data_obj)
+        with open(filename, 'w') as outfile:
+            json.dump(fp, outfile)
+    else:
+        with open(filename, 'w') as file_object:
+            json.dump(data_obj, file_object)
+    
+
+    print("Nilai TDS : ", tds_value_sensor)
+    print("Nilai PH : ", ph_value_sensor)
+    print("Nilai HC : ", high_value_sensor)import socket
+import json
+import pickle
+import os
+import datetime 
+
+
+
+############# INPUT FILE #################
+filename = 'sensor_value_used.json'
+
+file_model_predict_water = open('model_predict.pkl', 'rb')
+model_predict_water = pickle.load(file_model_predict_water)
+file_model_predict_water.close()
+
+######## INITIAL THE VARIABLE #########
  
-s.bind(('0.0.0.0', 8090 ))
-s.listen(0)       
+# importing the libraries
+from bs4 import BeautifulSoup
+import requests
 
-e = datetime.datetime.now()
+url="http://192.168.50.192/"
 
-today = e.strftime("%d/%m/%Y")
-##############################
- 
-while True:
- 
-    client, addr = s.accept()
-    print(client)
- 
-    while True:
-        content = client.recv(32)
- 
-        if len(content) ==0:
-           break
- 
-        else:
+time = datetime.datetime.now()
 
-            x=0
+today = time.strftime("%d/%m/%Y")
 
-            # print(content)
-            print(type(today))
+x=0
+while(1):
 
-            value_read = content.split()
-            float_read = []
-            
-            for i in value_read:
-                float_read.append(float(i))
-            
+    # Make a GET request to fetch the raw HTML content
+    html_content = requests.get(url).text
+    # Parse the html content
+    soup = BeautifulSoup(html_content, "lxml")
+    #print(soup.prettify()) # print the parsed data of html
+    
+    high_value_sensor=float(soup.h4.text)
+    ph_value_sensor=float(soup.h3.text)
+    tds_value_sensor=float(soup.h2.text)
 
-            #INISIALISASI NILAI SETIAP SENSOR DAN SIMPAN DI MASING2 VARIABEL
+    result_predict=model_predict_water.predict([[tds_value_sensor, ph_value_sensor]])[0]
 
-            tds_value_sensor = float_read[0]
-            ph_value_sensor = float_read[1]
-            high_value_sensor = float_read[2]
+    if result_predict ==1:
+        result_value="Drinkable"
+    elif result_predict == 0:
+        result_value="Not Drinkable"
+    
 
-            
-            result_predict = model_predict_water.predict([[tds_value_sensor, ph_value_sensor]])[0]
-                
-            #DEFINISIKAN KE KATEGORI
-            if result_predict == 1:
-                result_value = "Drinkable"
-            elif result_predict==0:
-                result_value = "Not Drinkable"
-                
+    data_obj ={
+        "date" : today,
+        "solid": tds_value_sensor,
+        "ph": ph_value_sensor,
+        "high":high_value_sensor,
+        "predict": result_value
+    }
 
-            #SAVE DATA TO DICTIONARY
-                
-            data_obj = {
-                "no": x,
-                "date": today,
-                "solid": tds_value_sensor,
-                "ph": ph_value_sensor,
-                'high': high_value_sensor,
-                'predict': result_value
-            }
+    if os.path.isfile(filename) and os.access(filename, os.R_OK):
+        fp = json.load(open(filename))
+        if type(fp) is dict:
+            fp = [fp]
+        fp.append(data_obj)
+        with open(filename, 'w') as outfile:
+            json.dump(fp, outfile)
+    else:
+        with open(filename, 'w') as file_object:
+            json.dump(data_obj, file_object)
+    
 
-            if os.path.isfile(filename) and os.access(filename, os.R_OK):
-                # checks if file exists
-                fp = json.load(open(filename))
-                if type(fp) is dict:
-                    fp = [fp]
-                fp.append(data_obj)  
-                with open(filename, 'w') as outfile:
-                    json.dump(fp, outfile)
-            else:
-                with open(filename, 'w') as file_object:
-                        json.dump(data_obj, file_object)
-
-            print("tds : ", tds_value_sensor)
-            print("ph : ", ph_value_sensor)
-            print("high : ", high_value_sensor)
-            print("predict : ", result_value)
- 
-    print("Closing connection")
-    client.close()
+    print("Nilai TDS : ", tds_value_sensor)
+    print("Nilai PH : ", ph_value_sensor)
+    print("Nilai HC : ", high_value_sensor)
